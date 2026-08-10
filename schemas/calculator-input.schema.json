@@ -1,0 +1,768 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cardec.app/schemas/calculator-input.schema.json",
+  "title": "Cardec calculator scenario",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scenarioId",
+    "name",
+    "flow",
+    "analysis",
+    "modeling"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "scenarioId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sourceScenarioId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "flow": {
+      "enum": [
+        "replacement-timing",
+        "new-car-acquisition",
+        "used-vs-new"
+      ]
+    },
+    "analysis": {
+      "$ref": "#/$defs/analysis"
+    },
+    "modeling": {
+      "$ref": "#/$defs/modeling"
+    },
+    "replacementTiming": {
+      "$ref": "#/$defs/replacementTiming"
+    },
+    "newCarAcquisition": {
+      "$ref": "#/$defs/newCarAcquisition"
+    },
+    "usedVsNew": {
+      "$ref": "#/$defs/usedVsNew"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "flow": {
+          "const": "replacement-timing"
+        }
+      },
+      "required": [
+        "replacementTiming"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "newCarAcquisition"
+            ]
+          },
+          {
+            "required": [
+              "usedVsNew"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "properties": {
+        "flow": {
+          "const": "new-car-acquisition"
+        }
+      },
+      "required": [
+        "newCarAcquisition"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "replacementTiming"
+            ]
+          },
+          {
+            "required": [
+              "usedVsNew"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "properties": {
+        "flow": {
+          "const": "used-vs-new"
+        }
+      },
+      "required": [
+        "usedVsNew"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "replacementTiming"
+            ]
+          },
+          {
+            "required": [
+              "newCarAcquisition"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "money": {
+      "type": "number",
+      "minimum": 0
+    },
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asOfDate",
+        "currency",
+        "distanceUnit",
+        "annualDistance",
+        "horizonYears",
+        "rateBasis",
+        "discountRate"
+      ],
+      "properties": {
+        "asOfDate": {
+          "type": "string",
+          "format": "date"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "distanceUnit": {
+          "enum": [
+            "mile",
+            "kilometer"
+          ]
+        },
+        "annualDistance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "horizonYears": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "rateBasis": {
+          "enum": [
+            "real",
+            "nominal"
+          ]
+        },
+        "discountRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "inflationRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "investmentTaxRate": {
+          "$ref": "#/$defs/rate"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "rateBasis": {
+                "const": "nominal"
+              }
+            },
+            "required": [
+              "rateBasis"
+            ]
+          },
+          "then": {
+            "required": [
+              "inflationRate"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "inflationRate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "modeling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "deterministic",
+            "stochastic"
+          ]
+        },
+        "simulationRuns": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 100000
+        },
+        "randomSeed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "stochastic"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "simulationRuns"
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "simulationRuns"
+                  ]
+                },
+                {
+                  "required": [
+                    "randomSeed"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "vehicleIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "modelYear",
+        "currentMileage"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "modelYear": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100
+        },
+        "currentMileage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "inServiceDate": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "vehicleOffer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "price",
+        "salesTax",
+        "fees",
+        "incentives"
+      ],
+      "properties": {
+        "price": {
+          "$ref": "#/$defs/money"
+        },
+        "salesTax": {
+          "$ref": "#/$defs/money"
+        },
+        "fees": {
+          "$ref": "#/$defs/money"
+        },
+        "incentives": {
+          "$ref": "#/$defs/money"
+        }
+      }
+    },
+    "yearValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "year",
+        "value"
+      ],
+      "properties": {
+        "year": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "value": {
+          "$ref": "#/$defs/money"
+        }
+      }
+    },
+    "costSchedule": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/yearValue"
+      }
+    },
+    "resaleForecast": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/yearValue"
+      }
+    },
+    "operatingCosts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "annualInsurance",
+        "annualRegistration",
+        "annualEnergy",
+        "maintenance"
+      ],
+      "properties": {
+        "annualInsurance": {
+          "$ref": "#/$defs/money"
+        },
+        "annualRegistration": {
+          "$ref": "#/$defs/money"
+        },
+        "annualEnergy": {
+          "$ref": "#/$defs/money"
+        },
+        "maintenance": {
+          "$ref": "#/$defs/costSchedule"
+        }
+      }
+    },
+    "failureEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "year",
+        "probability",
+        "repairCost",
+        "downtimeCost"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        },
+        "probability": {
+          "$ref": "#/$defs/rate"
+        },
+        "repairCost": {
+          "$ref": "#/$defs/money"
+        },
+        "downtimeCost": {
+          "$ref": "#/$defs/money"
+        },
+        "costStdDev": {
+          "$ref": "#/$defs/money"
+        }
+      }
+    },
+    "loan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "downPayment": {
+          "$ref": "#/$defs/money"
+        },
+        "apr": {
+          "$ref": "#/$defs/rate"
+        },
+        "termMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120
+        },
+        "originationFees": {
+          "$ref": "#/$defs/money"
+        },
+        "balloonPayment": {
+          "$ref": "#/$defs/money"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "downPayment",
+              "apr",
+              "termMonths",
+              "originationFees"
+            ]
+          }
+        }
+      ]
+    },
+    "capitalOverlay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "startingCapital": {
+          "$ref": "#/$defs/money"
+        },
+        "expectedAnnualReturn": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1
+        },
+        "annualVolatility": {
+          "$ref": "#/$defs/rate"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "startingCapital",
+              "expectedAnnualReturn"
+            ]
+          }
+        }
+      ]
+    },
+    "replacementTiming": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vehicle",
+        "currentMarketValue",
+        "loanPayoff",
+        "resaleForecast",
+        "operatingCosts",
+        "failureEvents",
+        "replacementOffer",
+        "capitalOverlay"
+      ],
+      "properties": {
+        "vehicle": {
+          "$ref": "#/$defs/vehicleIdentity"
+        },
+        "currentMarketValue": {
+          "$ref": "#/$defs/money"
+        },
+        "loanPayoff": {
+          "$ref": "#/$defs/money"
+        },
+        "resaleForecast": {
+          "$ref": "#/$defs/resaleForecast"
+        },
+        "operatingCosts": {
+          "$ref": "#/$defs/operatingCosts"
+        },
+        "failureEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/failureEvent"
+          }
+        },
+        "replacementOffer": {
+          "$ref": "#/$defs/vehicleOffer"
+        },
+        "replacementAnnualOperatingCost": {
+          "$ref": "#/$defs/money"
+        },
+        "transactionCosts": {
+          "$ref": "#/$defs/money"
+        },
+        "capitalOverlay": {
+          "$ref": "#/$defs/capitalOverlay"
+        }
+      }
+    },
+    "lease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "termMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 72
+        },
+        "dueAtSigning": {
+          "$ref": "#/$defs/money"
+        },
+        "monthlyPayment": {
+          "$ref": "#/$defs/money"
+        },
+        "residualValue": {
+          "$ref": "#/$defs/money"
+        },
+        "annualMileageAllowance": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "excessMileageRate": {
+          "$ref": "#/$defs/money"
+        },
+        "dispositionFee": {
+          "$ref": "#/$defs/money"
+        },
+        "refundableDeposit": {
+          "$ref": "#/$defs/money"
+        },
+        "buyoutPlanned": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "termMonths",
+              "dueAtSigning",
+              "monthlyPayment",
+              "residualValue",
+              "annualMileageAllowance",
+              "excessMileageRate",
+              "dispositionFee"
+            ]
+          }
+        }
+      ]
+    },
+    "newCarAcquisition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vehicle",
+        "offer",
+        "resaleForecast",
+        "operatingCosts",
+        "cashEnabled",
+        "loan",
+        "lease",
+        "capitalOverlay"
+      ],
+      "properties": {
+        "vehicle": {
+          "$ref": "#/$defs/vehicleIdentity"
+        },
+        "offer": {
+          "$ref": "#/$defs/vehicleOffer"
+        },
+        "resaleForecast": {
+          "$ref": "#/$defs/resaleForecast"
+        },
+        "operatingCosts": {
+          "$ref": "#/$defs/operatingCosts"
+        },
+        "cashEnabled": {
+          "type": "boolean"
+        },
+        "loan": {
+          "$ref": "#/$defs/loan"
+        },
+        "lease": {
+          "$ref": "#/$defs/lease"
+        },
+        "capitalOverlay": {
+          "$ref": "#/$defs/capitalOverlay"
+        }
+      }
+    },
+    "purchaseCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vehicle",
+        "offer",
+        "resaleForecast",
+        "operatingCosts",
+        "financing"
+      ],
+      "properties": {
+        "vehicle": {
+          "$ref": "#/$defs/vehicleIdentity"
+        },
+        "offer": {
+          "$ref": "#/$defs/vehicleOffer"
+        },
+        "resaleForecast": {
+          "$ref": "#/$defs/resaleForecast"
+        },
+        "operatingCosts": {
+          "$ref": "#/$defs/operatingCosts"
+        },
+        "financing": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type"
+              ],
+              "properties": {
+                "type": {
+                  "const": "cash"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "loan"
+              ],
+              "properties": {
+                "type": {
+                  "const": "loan"
+                },
+                "loan": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/loan"
+                    },
+                    {
+                      "properties": {
+                        "enabled": {
+                          "const": true
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "usedVsNew": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "used",
+        "newBenchmark",
+        "usedFailureEvents",
+        "capitalOverlay"
+      ],
+      "properties": {
+        "used": {
+          "$ref": "#/$defs/purchaseCandidate"
+        },
+        "newBenchmark": {
+          "$ref": "#/$defs/purchaseCandidate"
+        },
+        "inspectionAndReconditioning": {
+          "$ref": "#/$defs/money"
+        },
+        "usedFailureEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/failureEvent"
+          }
+        },
+        "capitalOverlay": {
+          "$ref": "#/$defs/capitalOverlay"
+        }
+      }
+    }
+  }
+}
