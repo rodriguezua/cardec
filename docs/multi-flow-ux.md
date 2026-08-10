@@ -10,8 +10,8 @@ or compares flows.
 | Entry point | User decision | Primary result |
 | --- | --- | --- |
 | Replace my current car | "Keep it or replace it, and when?" | Optimal replacement age |
-| Buy a new car | "Cash, loan, or lease?" | Lowest NPV acquisition path |
-| Compare used with new | "Is this used car actually cheaper?" | Reliability-adjusted cost gap |
+| Buy a new car | "Cash, loan, or lease?" | Monthly ownership cost by path |
+| Compare used with new | "Is this used car actually cheaper?" | Monthly ownership cost: used vs new |
 
 ## 2. Navigation model
 
@@ -94,6 +94,10 @@ to know whether to keep it for two, four, or six more years.
 **Scenario:** A user has cash available for a vehicle but wants to compare
 paying cash, financing, and leasing while investing unused capital.
 
+The headline output is **monthly ownership cost**, displayed side by side for
+cash, loan, and lease. NPV remains part of the underlying calculation and
+detail view, but it is not the primary decision metric.
+
 | Step | Inputs | Progressive disclosure |
 | --- | --- | --- |
 | Vehicle | Price, taxes, fees, incentives, holding period, resale forecast | Incentive eligibility details appear when an incentive is entered |
@@ -105,6 +109,20 @@ paying cash, financing, and leasing while investing unused capital.
 
 Users may disable loan or lease paths. At least two acquisition paths must
 remain enabled for a comparison.
+
+**Primary visual**
+
+- A ranked horizontal bar for each enabled path: `Cash`, `Loan`, and `Lease`.
+- Each bar shows total monthly ownership cost and stacked contributions from
+  vehicle cost, financing, taxes and fees, insurance, maintenance, energy, and
+  opportunity cost.
+- Resale proceeds, lease deposit refunds, and other terminal credits reduce the
+  relevant segment rather than appearing as income.
+- The lowest-cost path is highlighted with the monthly and total difference
+  from every alternative.
+- An `Include investment effects` toggle switches between vehicle-only monthly
+  ownership cost and investment-adjusted monthly ownership cost. Both values
+  remain visible in the detail table.
 
 **Cash-flow convention**
 
@@ -122,6 +140,10 @@ remain enabled for a comparison.
 and needs repair risk included rather than hidden in an average maintenance
 number.
 
+The headline output is **monthly ownership cost for used versus new**. The used
+vehicle is shown with both base and reliability-adjusted monthly cost so repair
+risk remains explicit.
+
 | Step | Inputs | Progressive disclosure |
 | --- | --- | --- |
 | Used vehicle | Price, model year, mileage, inspection/reconditioning, taxes/fees | Prior damage and warranty fields are optional advanced inputs |
@@ -134,6 +156,18 @@ number.
 The result must show both the raw ownership-cost gap and the
 reliability-adjusted gap. Reliability cost is never silently folded into
 maintenance.
+
+**Primary visual**
+
+- Two aligned stacked bars compare `Used` and `New` monthly ownership cost.
+- Both bars use identical cost categories and scale so the visual difference is
+  economically comparable.
+- The used bar includes a distinct reliability segment. In stochastic mode, it
+  also shows a percentile range around expected monthly ownership cost.
+- A delta callout states the monthly and holding-period difference, for example:
+  "Used costs $184 less per month, including expected repairs."
+- A toggle switches between base, reliability-adjusted, and
+  investment-adjusted views without changing scenario inputs.
 
 ## 5. Input interaction patterns
 
@@ -185,17 +219,55 @@ The review screen is a calculation manifest, not another form. It groups:
 
 Each group has an `Edit` action that returns to the originating step.
 
-The results workspace uses the same four-region layout for all flows:
+### Monthly ownership cost definition
+
+For Stories 2A and 2B, monthly ownership cost is the equivalent level monthly
+cost of owning or using the vehicle over the selected holding period:
+
+```text
+monthly rate = (1 + annual discount rate)^(1/12) - 1
+
+monthly ownership cost =
+  cost NPV / holding months                                  when rate = 0
+  cost NPV * monthly rate / (1 - (1 + monthly rate)^-months) otherwise
+```
+
+`cost NPV` includes all path-specific acquisition, financing, operating, and
+exit cash flows. Sale proceeds, refundable deposits, and positive terminal
+equity reduce cost NPV. This produces a comparable monthly value even when cash,
+loan, and lease payments occur at different times.
+
+The UI must not label average monthly cash outflow as monthly ownership cost.
+Average cash outflow may be shown as a secondary liquidity metric, because it
+excludes depreciation, terminal value, and timing effects.
+
+Two calculated variants are retained:
+
+| Metric | Included costs | Use |
+| --- | --- | --- |
+| Vehicle-only monthly ownership cost | Acquisition/lease, financing, operating costs, taxes/fees, and terminal vehicle value | Default comparison |
+| Investment-adjusted monthly ownership cost | Vehicle-only cost plus foregone or earned after-tax investment value | Opportunity-cost view |
+
+For Story 2B, reliability-adjusted monthly ownership cost adds probability-
+weighted repair and downtime cash flows. In stochastic mode, the headline is
+the expected value and the visual also shows P10-P90 cost bounds.
+
+### Results hierarchy
+
+The results workspace uses the same five-region layout for all flows, but
+Stories 2A and 2B prioritize monthly ownership cost:
 
 | Region | Content |
 | --- | --- |
-| Decision | Recommended path/time, cost gap, confidence indicator |
-| Economics | NPV, equivalent annual cost, monthly cash flow, terminal value |
+| Decision | Optimal replacement time for Story 1; lowest monthly ownership cost and monthly delta for Stories 2A/2B |
+| Monthly cost | Ranked stacked bars, cost-category breakdown, and comparison toggles |
+| Economics | Cost NPV, total holding-period cost, average monthly cash outflow, and terminal value |
 | Timeline | Cost curve and event markers |
 | Uncertainty | Sensitivity tornado; percentile bands in stochastic mode |
 
-Recommendations include the winning condition: for example, "Loan is cheaper
-than cash by $2,480 NPV if after-tax investment return remains above 4.8%."
+Recommendations include the winning condition using the headline metric. For
+example: "Loan costs $46 less per month than cash when after-tax investment
+return exceeds 4.8%." NPV is available in the supporting detail and export.
 
 ## 7. Cross-flow handoffs
 
