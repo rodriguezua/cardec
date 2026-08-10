@@ -15,6 +15,9 @@ or compares flows.
 
 ## 2. Navigation model
 
+Detailed end-to-end flowcharts and conditional question paths for all three
+stories are defined in [Flowcharts and questionnaire logic](flow-diagrams.md).
+
 ```mermaid
 flowchart LR
   A[Choose decision] --> B[Scenario basics]
