@@ -6,6 +6,7 @@ financing decisions, and new-versus-used comparisons.
 ## Product design
 
 - [Multi-flow UX specification](docs/multi-flow-ux.md)
+- [Flowcharts and questionnaire logic](docs/flow-diagrams.md)
 - [Canonical calculator input schema](schemas/calculator-input.schema.json)
 
 The input contract uses a shared scenario envelope and three discriminated
