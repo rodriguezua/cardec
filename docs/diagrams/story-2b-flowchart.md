@@ -13,7 +13,7 @@ flowchart TD
   S2BG["Build comparable operating-cost schedules"]
   S2BH["Model used-vehicle failures, repairs, and downtime"]
   S2BI{"Investment overlay enabled?"}
-  S2BJ["Model capital difference and after-tax terminal value"]
+  S2BJ["Model capital difference and gross investment balance"]
   S2BK["Use vehicle-only economics"]
   S2BL{"Modeling mode?"}
   S2BM["Calculate expected reliability cost"]

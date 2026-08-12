@@ -27,7 +27,7 @@ flowchart TD
   Q2BU["Q: Failure events, probabilities, repair costs, and downtime"]
   Q2BV["Show base cost only; label reliability as excluded"]
   Q2BW["Q: Include opportunity cost of price and cash-flow differences?"]
-  Q2BX["Q: Investment return and tax assumptions"]
+  Q2BX["Q: Gross annual investment return"]
   Q2BY["Exclude investment effects"]
   Q2BZ["Q: Deterministic or stochastic model?"]
   Q2BZA["Q: Reliability distributions, volatility, and simulation count"]
