@@ -1,11 +1,37 @@
-# Multi-flow UX and input design
+# Multi-flow product concept and provisional UI requirements
+
+## Project purpose and design status
+
+Cardec is planned as a web-based application with a graphical user interface.
+The application will collect vehicle and financial assumptions, run
+deterministic or stochastic calculations, and visually explain the resulting
+ownership economics.
+
+The project is currently in the **calculation and statistical validation
+phase**. This document defines the information, decisions, outputs, and
+traceability that a future UI must support. It does not select a final page
+layout, component library, visual style, navigation pattern, or control set.
+
+Work proceeds through explicit stage gates:
+
+| Stage | Goal | Exit condition |
+| --- | --- | --- |
+| 1. Deterministic validation | Prove formulas, cash-flow timing, depreciation, financing, maintenance, and terminal values | Benchmark scenarios reconcile to independently calculated expected values |
+| 2. Statistical validation | Prove reliability, distributions, simulations, percentiles, and sensitivity behavior | Fixed-seed tests are repeatable and simulated results match analytical expectations where available |
+| 3. Model stabilization | Finalize input definitions, output metrics, exclusions, and decision thresholds | Every result is traceable to versioned inputs and documented formulas |
+| 4. UI exploration | Compare ways to present questions, controls, assumptions, and visual results | A UI direction is selected through scenario-based review |
+| 5. Web implementation | Build the selected responsive and accessible interface | End-to-end user flows reproduce validated model results |
+
+Until Stages 1-3 are complete, UI statements below are requirements or
+hypotheses to test, not settled implementation decisions.
 
 ## 1. Product decision
 
-Use one scenario workspace with three goal-based entry points. Do not present
-users with one large vehicle form. Each flow asks only for inputs that can
-change its result, while retaining shared assumptions when the user switches
-or compares flows.
+The current product hypothesis is one scenario workspace with three goal-based
+entry points. The future UI should avoid one undifferentiated vehicle form.
+Each flow should ask only for inputs that can change its result while retaining
+shared assumptions when the user switches or compares flows. This hypothesis
+will be reviewed during UI exploration.
 
 | Entry point | User decision | Primary result |
 | --- | --- | --- |
@@ -13,7 +39,7 @@ or compares flows.
 | Buy a new car | "Cash, loan, or lease?" | Monthly ownership cost by path |
 | Compare used with new | "Is this used car actually cheaper?" | Monthly ownership cost: used vs new |
 
-## 2. Navigation model
+## 2. Provisional navigation model
 
 Detailed end-to-end flowcharts and conditional question paths for all three
 stories are defined in [Flowcharts and questionnaire logic](flow-diagrams.md).
@@ -37,9 +63,10 @@ flowchart LR
   K --> N[Open related flow]
 ```
 
-The persistent workspace header contains scenario name, currency, save status,
-and a `Change decision` action. The stepper contains only the active flow's
-steps. Back navigation never discards entered values.
+A candidate web UI may use a persistent workspace header containing scenario
+name, currency, save status, and a `Change decision` action. A stepper may show
+only the active flow's steps. Regardless of the final controls, back navigation
+must not discard entered values.
 
 ## 3. Shared scenario envelope
 
@@ -172,7 +199,7 @@ maintenance.
 - A toggle switches between base, reliability-adjusted, and
   investment-adjusted views without changing scenario inputs.
 
-## 5. Input interaction patterns
+## 5. Provisional input interaction requirements
 
 ### Units and timing
 
@@ -210,7 +237,7 @@ Field errors are immediate. Cross-field errors appear after blur and in the
 step summary. Model-readiness errors block `Calculate` and link directly to the
 input that needs attention.
 
-## 6. Review and results workspace
+## 6. Provisional review and results workspace
 
 The review screen is a calculation manifest, not another form. It groups:
 
@@ -272,7 +299,7 @@ Recommendations include the winning condition using the headline metric. For
 example: "Loan costs $46 less per month than cash when after-tax investment
 return exceeds 4.8%." NPV is available in the supporting detail and export.
 
-## 7. Cross-flow handoffs
+## 7. Proposed cross-flow handoffs
 
 Users can branch without re-entry:
 
@@ -288,9 +315,12 @@ source calculation.
 
 ## 8. Canonical state model
 
-`schemas/calculator-input.schema.json` is the source of truth for persisted and
-API-bound inputs. UI-only state such as expanded panels, field focus, and chart
-selection must not be stored in the calculation payload.
+`schemas/calculator-input.schema.json` is the working source of truth for
+calculation inputs while the model is being validated. It may evolve when tests
+expose missing assumptions or ambiguous definitions. Once stabilized, it will
+become the persisted and API-bound contract for the web application. UI-only
+state such as expanded panels, field focus, and chart selection must not be
+stored in the calculation payload.
 
 The `flow` discriminator selects exactly one payload:
 

@@ -1,16 +1,38 @@
 # Cardec
 
-Cardec is a multi-flow vehicle economics calculator for replacement timing,
-financing decisions, and new-versus-used comparisons.
+Cardec is intended to become a **web-based vehicle economics application with
+a graphical user interface**. It will help users evaluate replacement timing,
+new-car acquisition options, and used-versus-new comparisons.
 
-## Product design
+## Current phase: model validation
 
-- [Multi-flow UX specification](docs/multi-flow-ux.md)
+The project is currently testing the calculation and statistical methods behind
+the application. The immediate objective is to establish that the financial
+logic, cash-flow timing, depreciation and maintenance models, reliability
+adjustments, opportunity-cost treatment, and stochastic outputs are correct.
+
+UI layouts, interaction patterns, visual styling, and control behavior are
+**not yet final product decisions**. The current diagrams describe the
+information and decision logic the future web UI must support. UI options will
+be reviewed only after the model produces correct, explainable, and repeatable
+results.
+
+Development order:
+
+1. Validate deterministic calculations against known scenarios.
+2. Validate statistical assumptions, simulations, and sensitivity outputs.
+3. Stabilize calculation inputs, outputs, and decision rules.
+4. Review UI concepts, visualizations, and user-control options.
+5. Implement and test the selected web interface.
+
+## Concept and model documentation
+
+- [Multi-flow product concept and provisional UI requirements](docs/multi-flow-ux.md)
 - [Flowcharts and questionnaire logic](docs/flow-diagrams.md)
 - [Canonical calculator input schema](schemas/calculator-input.schema.json)
 
-The input contract uses a shared scenario envelope and three discriminated
-flows:
+The working input contract uses a shared scenario envelope and three
+discriminated flows:
 
 - `replacement-timing`
 - `new-car-acquisition`
