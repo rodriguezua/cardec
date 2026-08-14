@@ -1,19 +1,48 @@
-# Multi-flow UX and input design
+# Multi-flow product concept and provisional UI requirements
+
+## Project purpose and design status
+
+Cardec is planned as a web-based application with a graphical user interface.
+The application will collect vehicle and financial assumptions, run
+deterministic or stochastic calculations, and visually explain the resulting
+ownership economics.
+
+The project is currently in the **calculation and statistical validation
+phase**. This document defines the information, decisions, outputs, and
+traceability that a future UI must support. It does not select a final page
+layout, component library, visual style, navigation pattern, or control set.
+
+Work proceeds through explicit stage gates:
+
+| Stage | Goal | Exit condition |
+| --- | --- | --- |
+| 1. Deterministic validation | Prove formulas, cash-flow timing, depreciation, financing, maintenance, and terminal values | Benchmark scenarios reconcile to independently calculated expected values |
+| 2. Statistical validation | Prove reliability, distributions, simulations, percentiles, and sensitivity behavior | Fixed-seed tests are repeatable and simulated results match analytical expectations where available |
+| 3. Model stabilization | Finalize input definitions, output metrics, exclusions, and decision thresholds | Every result is traceable to versioned inputs and documented formulas |
+| 4. UI exploration | Compare ways to present questions, controls, assumptions, and visual results | A UI direction is selected through scenario-based review |
+| 5. Web implementation | Build the selected responsive and accessible interface | End-to-end user flows reproduce validated model results |
+
+Until Stages 1-3 are complete, UI statements below are requirements or
+hypotheses to test, not settled implementation decisions.
 
 ## 1. Product decision
 
-Use one scenario workspace with three goal-based entry points. Do not present
-users with one large vehicle form. Each flow asks only for inputs that can
-change its result, while retaining shared assumptions when the user switches
-or compares flows.
+The current product hypothesis is one scenario workspace with three goal-based
+entry points. The future UI should avoid one undifferentiated vehicle form.
+Each flow should ask only for inputs that can change its result while retaining
+shared assumptions when the user switches or compares flows. This hypothesis
+will be reviewed during UI exploration.
 
 | Entry point | User decision | Primary result |
 | --- | --- | --- |
 | Replace my current car | "Keep it or replace it, and when?" | Optimal replacement age |
-| Buy a new car | "Cash, loan, or lease?" | Lowest NPV acquisition path |
-| Compare used with new | "Is this used car actually cheaper?" | Reliability-adjusted cost gap |
+| Buy a new car | "Cash, loan, or lease?" | Monthly ownership cost by path |
+| Compare used with new | "Is this used car actually cheaper?" | Monthly ownership cost: used vs new |
 
-## 2. Navigation model
+## 2. Provisional navigation model
+
+Detailed end-to-end flowcharts and conditional question paths for all three
+stories are defined in [Flowcharts and questionnaire logic](flow-diagrams.md).
 
 ```mermaid
 flowchart LR
@@ -34,9 +63,10 @@ flowchart LR
   K --> N[Open related flow]
 ```
 
-The persistent workspace header contains scenario name, currency, save status,
-and a `Change decision` action. The stepper contains only the active flow's
-steps. Back navigation never discards entered values.
+A candidate web UI may use a persistent workspace header containing scenario
+name, currency, save status, and a `Change decision` action. A stepper may show
+only the active flow's steps. Regardless of the final controls, back navigation
+must not discard entered values.
 
 ## 3. Shared scenario envelope
 
@@ -47,12 +77,11 @@ Every calculation is stored as a versioned scenario:
 | Scenario name | Yes | Text | Default from vehicle and goal |
 | Analysis date | Yes | Date | Defaults to today; anchors vehicle age and cash flows |
 | Currency | Yes | Select | One currency per scenario; no implicit FX conversion |
-| Annual distance | Yes | Number + mi/km | Must be positive |
-| Analysis horizon | Yes | Year slider + input | 1–30 years |
-| Discount rate | Yes | Percentage | Real or nominal, declared explicitly |
+| Annual distance | Yes | Slider + number + mi/km | Must be positive; results update without leaving the workspace |
+| Analysis horizon | Yes | Slider + input | Flow-specific presets may be shown in months; 1–30 years is supported |
+| Discount rate | Yes | Percentage + explanation | Real or nominal, declared explicitly; never derived from vehicle depreciation |
 | Inflation | Yes | Percentage | Hidden when rates are real |
-| Tax treatment | Yes | Toggle + rate | Applied only to taxable investment gains |
-| Modeling mode | Yes | Deterministic/stochastic | Stochastic reveals simulation controls |
+| Modeling mode | Stories 1 and 2B | Deterministic/stochastic | Stochastic reveals reliability and cost-distribution controls |
 
 ### Rate convention
 
@@ -63,6 +92,14 @@ The user must choose one internally consistent rate basis:
   rate. Inflation is not separately applied.
 
 The UI blocks calculation when rate bases are mixed.
+
+Story 2A is deterministic. Its investment slider is a sensitivity input, not a
+return distribution or simulation control.
+
+The discount rate represents the time value of money: it converts cash flows at
+different dates into comparable analysis-date dollars. It is not the inflation
+rate, financing APR, investment return, or vehicle depreciation rate. A lease
+residual may inform a resale forecast, but never the discount rate.
 
 ## 4. Flow specifications
 
@@ -96,15 +133,19 @@ user may have the full purchase amount, only a down payment, or only enough for
 lease inception costs. Investment results depend on what the user actually does
 with unused cash rather than assuming every avoided payment is invested.
 
+The headline output is **monthly ownership cost**, displayed side by side for
+cash, loan, and lease. NPV remains part of the underlying calculation and
+detail view, but it is not the primary decision metric.
+
 | Step | Inputs | Progressive disclosure |
 | --- | --- | --- |
-| Vehicle | Asking price, transaction price, taxes, fees, path-specific incentives, holding period, resale forecast | Incentive eligibility and market-value details appear when needed |
+| Vehicle | Asking and transaction price, jurisdiction, taxes/mandatory fees, path-specific incentives, holding period, resale forecast | The holding-period slider defaults to 24/36/48-month comparison points; incentive eligibility and market-value details appear when needed |
 | Available capital | Liquid cash, current-vehicle proceeds, maximum monthly vehicle budget | Affordability warnings appear per path without hiding hypothetical comparisons |
 | Cash | Cash price adjustments, source of funds, post-purchase saving behavior | Monthly saving controls appear only when surplus cash flow exists |
-| Loan | Down payment, APR, term, fees, prepayment, balloon | Balloon input appears only for balloon loans |
-| Lease | Due at signing, term, payment, residual/buyout, mileage allowance, disposition fee, end strategy | Renewal assumptions appear when the analysis extends past the lease term |
-| Ownership costs | Insurance by path, maintenance, registration, energy | A shared value can be overridden per path |
-| Investment overlay | Return, volatility, tax rate, contribution timing, treatment of monthly surplus | Volatility and simulation count appear only in stochastic mode |
+| Loan | User-selected down payment, APR, term, fees, prepayment, balloon | APR is adjustable; term presets are 36/48/60/72 months; origination fees and balloon terms are advanced |
+| Lease | Due-at-signing breakdown, first-payment treatment, term, payment, residual/buyout, mileage allowance, disposition fee, end strategy | Residual is shown as amount and percent of MSRP; mileage presets are 7,500/10,000/12,000/15,000 per year; renewal assumptions appear when needed |
+| Ownership costs | Optional insurance, maintenance, annual government charges, energy | Insurance is disabled until explicitly included; a shared value can be overridden per path |
+| Investment overlay | Available initial capital, return, volatility, tax rate, contribution timing, treatment of monthly surplus | Asked early after cash is confirmed; the return is editable and defaults to 10%; volatility appears only in stochastic mode |
 
 Users may disable loan or lease paths. At least two acquisition paths must
 remain enabled for a comparison.
@@ -176,13 +217,45 @@ credit passed through as a lower lease cost is recorded as a lease-specific
 incentive. Missing jurisdiction rules produce a visible warning and excluded-cost
 entry rather than silently assuming zero tax.
 
+Loan down payment has no normative product default. The UI may explain that a
+larger down payment lowers loan-to-value, interest, and negative-equity risk,
+but it must not label 20% as universally recommended. When investment effects
+are enabled, the result instead shows the return at which investing additional
+cash is projected to outperform using it as a down payment.
+
+Purchase taxes use a jurisdiction profile. The profile can supply a percentage,
+cap, fixed charge, or combination; users can edit the calculated amount. A
+generic percentage slider is shown only where the jurisdiction actually uses
+an uncapped percentage. Annual property tax, registration, and mandatory
+surcharges remain recurring ownership costs rather than purchase tax.
+
+**Primary visual**
+
+- A ranked horizontal bar for each enabled path: `Cash`, `Loan`, and `Lease`.
+- Each bar shows total monthly ownership cost and stacked contributions from
+  vehicle cost, financing, taxes and fees, insurance, maintenance, energy, and
+  opportunity cost.
+- Resale proceeds, lease deposit refunds, and other terminal credits reduce the
+  relevant segment rather than appearing as income.
+- The lowest-cost path is highlighted with the monthly and total difference
+  from every alternative.
+- An `Include investment effects` toggle switches between vehicle-only monthly
+  ownership cost and investment-adjusted monthly ownership cost. Both values
+  remain visible in the detail table.
+- A separate equity section aligns each path's vehicle market value, loan or
+  buyout liability, resulting vehicle equity, and gross investment balance.
+  These values are not labeled household net worth and are not silently summed
+  into monthly ownership cost.
+
 **Cash-flow convention**
 
 - Time zero includes available capital, down payment, due-at-signing amounts,
   taxes, fees, incentives, and initial investment.
 - Monthly payments occur at period end unless marked "paid in advance."
-- Resale value, lease disposition, and investment liquidation occur at the end
-  of the selected holding period.
+- When due at signing includes the first lease payment, that payment is not
+  counted again in the recurring payment schedule.
+- Resale value and lease disposition occur at the end of the selected holding
+  period.
 - Refundable lease deposits are cash outflows at inception and inflows at
   return.
 - Month zero and month one are distinct. Each recurring payment or contribution
@@ -193,12 +266,98 @@ entry rather than silently assuming zero tax.
 - A repeated lease includes its new due-at-signing amount, payment, incentives,
   taxes, and fees. Any amount above a common monthly budget reduces cash or
   investment explicitly.
+- A holding period shorter than the lease term is not comparable unless an
+  early-termination or buyout quote is supplied for that date. At lease
+  maturity, the user selects return or buyout. A holding period longer than the
+  lease term requires a buyout or replacement-lease path. Disposition fees
+  apply only when the contract requires them.
+- The initial-capital opportunity-cost view starts every path with the same
+  available capital, invests only the amount unused at time zero, and assumes no
+  monthly investment contributions. Vehicle equity and investment balance are
+  reported separately. The behavior-adjusted view may add monthly saving or a
+  common budget, but it is a distinct comparison and must not be mixed into this
+  initial-capital view.
+- Investment growth is gross and unrealized: no sale or capital-gains tax is
+  modeled. For Flow 2A's whole-year horizons, the balance is
+  `principal * (1 + annual return)^years`. The 10% return is a visible editable
+  product estimate, not a guaranteed forecast.
+
+#### Flow 2A numerical validation snapshot
+
+The following sample validates calculation and interaction requirements; it is
+not a market quote or financial recommendation.
+
+| Assumption | Test value |
+| --- | ---: |
+| MSRP / dealer incentive applying to all paths | $46,630 / $7,500 |
+| Cash/loan out-the-door acquisition | $42,000, including the $500 South Carolina IMF and $2,370 additional purchase costs |
+| Holding-period slider / annual distance | 24, 36, 48 months / 7,000 miles |
+| Rate basis | Analysis-date dollars, 1.5% real discount |
+| Conservative resale proxy | $29,369.40 at month 36; exponential interpolation/extrapolation |
+| Loan | $8,400 sample down payment (20%), $33,600 principal, 3.99% APR, 60 months, $618.64 payment |
+| Lease | $4,118.15 due at signing including first payment; 35 later payments of $368.15; 36 months |
+| Lease end | $29,369.40 buyout plus $500 South Carolina IMF, or $395 disposition fee on return |
+| Ownership costs | $1,423.44 annual combined government charges; $220 annual energy; insurance and maintenance excluded |
+| Initial-capital overlay | $42,000; 10% gross annual return; yearly compounding; no monthly contributions, sale, or tax |
+
+The residual is a contractual buyout value, not a market-value guarantee. This
+test uses it only as a conservative month-36 resale proxy, implying an
+extrapolated value of $34,262 at month 24 and $25,175 at month 48.
+The $1,423.44 government-charge estimate is repeated annually in analysis-date
+dollars. The $2,370 additional purchase-cost input is a user-directed balancing
+amount, not a South Carolina estimate; a production scenario should require its
+fee labels or quote source instead of silently grouping it.
+
+**Vehicle-only equivalent monthly ownership cost**
+
+| Horizon | Cash | Loan | Lease |
+| ---: | ---: | ---: | ---: |
+| 24 months | $506 | $564 | Not comparable without a month-24 exit quote |
+| 36 months | $532 | $583 | $622 return / $625 buyout |
+| 48 months | $529 | $573 | $599 after month-36 buyout |
+
+At a deterministic 10% gross investment return, the initial-capital opportunity cost
+changes the ranking:
+
+| Horizon | Cash | Loan | Lease |
+| ---: | ---: | ---: | ---: |
+| 24 months | $868 | $636 | Not comparable |
+| 36 months | $909 | $658 | $659 return / $662 buyout |
+| 48 months | $923 | $652 | $638 after buyout |
+
+The 10% gross investment balances, displayed separately from vehicle equity,
+are:
+
+| Horizon | Cash | Loan | Lease |
+| ---: | ---: | ---: | ---: |
+| 24 months | $0 | $40,656 | Not comparable |
+| 36 months | $0 | $44,722 | $50,421 |
+| 48 months | $0 | $49,194 | $55,463 |
+
+Vehicle equity at 24/36/48 months is $34,262/$29,369/$25,175 for cash,
+$13,305/$15,122/$17,909 after loan payoff, and zero after lease return. A lease
+buyout places the vehicle value in the equity column after the buyout liability
+is paid.
+
+The investment-adjusted calculation adds the discounted gross gain
+foregone on each path's time-zero vehicle outlay to vehicle-only cost NPV.
+Unused-capital balances remain a separate equity disclosure, preventing the UI
+from presenting the result as household net worth.
+
+Validation references:
+
+- [South Carolina maximum tax and infrastructure maintenance fee](https://dor.sc.gov/sales-use-tax-index/maximum-tax-max-tax)
+- [CFPB: loan-to-value in an auto loan](https://www.consumerfinance.gov/ask-cfpb/what-is-a-loan-to-value-ratio-in-an-auto-loan-en-769/)
 
 ### 4.3 Used versus new
 
 **Scenario:** A user is comparing a four-year-old vehicle with a current model
 and needs repair risk included rather than hidden in an average maintenance
 number.
+
+The headline output is **monthly ownership cost for used versus new**. The used
+vehicle is shown with both base and reliability-adjusted monthly cost so repair
+risk remains explicit.
 
 | Step | Inputs | Progressive disclosure |
 | --- | --- | --- |
@@ -218,7 +377,19 @@ baseline, cash-flow timing, and saving-behavior rules as the new-car flow. A
 used-car cash path is not assumed affordable merely because it is cheaper, and a
 loan path retains all unused capital in the selected cash or investment account.
 
-## 5. Input interaction patterns
+**Primary visual**
+
+- Two aligned stacked bars compare `Used` and `New` monthly ownership cost.
+- Both bars use identical cost categories and scale so the visual difference is
+  economically comparable.
+- The used bar includes a distinct reliability segment. In stochastic mode, it
+  also shows a percentile range around expected monthly ownership cost.
+- A delta callout states the monthly and holding-period difference, for example:
+  "Used costs $184 less per month, including expected repairs."
+- A toggle switches between base, reliability-adjusted, and
+  investment-adjusted views without changing scenario inputs.
+
+## 5. Provisional input interaction requirements
 
 ### Units and timing
 
@@ -237,7 +408,7 @@ Defaults must be visible and attributable:
 | User-entered | Normal label |
 | Derived | "Calculated" badge with formula tooltip |
 | Market assumption | Source/date badge |
-| Product default | "Estimate" badge and one-click edit |
+| Product default | "Estimate" badge and one-click edit; never a normative recommendation |
 
 Never treat a zero value as "not provided." Optional numeric fields use `null`
 or are omitted.
@@ -248,7 +419,9 @@ Validation has three levels:
 
 1. **Field:** invalid ranges, missing units, impossible dates.
 2. **Cross-field:** payoff exceeds value, lease mileage conflict, holding period
-   exceeds lease term without a buyout.
+   falls before lease maturity without an exit quote, reaches maturity without
+   return or buyout selection, or exceeds lease term without a buyout or
+   replacement-lease path.
 3. **Model readiness:** insufficient depreciation years, no comparable paths,
    or stochastic mode without distributions.
 
@@ -256,7 +429,7 @@ Field errors are immediate. Cross-field errors appear after blur and in the
 step summary. Model-readiness errors block `Calculate` and link directly to the
 input that needs attention.
 
-## 6. Review and results workspace
+## 6. Provisional review and results workspace
 
 The review screen is a calculation manifest, not another form. It groups:
 
@@ -270,33 +443,74 @@ The review screen is a calculation manifest, not another form. It groups:
 
 Each group has an `Edit` action that returns to the originating step.
 
-The results workspace uses the same four-region layout for all flows:
+### Monthly ownership cost definition
+
+For Stories 2A and 2B, monthly ownership cost is the equivalent level monthly
+cost of owning or using the vehicle over the selected holding period:
+
+```text
+monthly rate = (1 + annual discount rate)^(1/12) - 1
+
+monthly ownership cost =
+  cost NPV / holding months                                  when rate = 0
+  cost NPV * monthly rate / (1 - (1 + monthly rate)^-months) otherwise
+```
+
+`cost NPV` includes all path-specific acquisition, financing, operating, and
+exit cash flows. Sale proceeds, refundable deposits, and positive terminal
+equity reduce cost NPV. This produces a comparable monthly value even when cash,
+loan, and lease payments occur at different times.
+
+The UI must not label average monthly cash outflow as monthly ownership cost.
+Average cash outflow may be shown as a secondary liquidity metric, because it
+excludes depreciation, terminal value, and timing effects.
+
+Two calculated variants are retained:
+
+| Metric | Included costs | Use |
+| --- | --- | --- |
+| Vehicle-only monthly ownership cost | Acquisition/lease, financing, operating costs, taxes/fees, and terminal vehicle value | Default comparison |
+| Investment-adjusted monthly ownership cost | Vehicle-only cost plus foregone gross investment growth | Opportunity-cost view |
+
+For Story 2B, reliability-adjusted monthly ownership cost adds probability-
+weighted repair and downtime cash flows. In stochastic mode, the headline is
+the expected value and the visual also shows P10-P90 cost bounds.
+
+### Results hierarchy
+
+The results workspace uses the same six-region layout for all flows, but
+Stories 2A and 2B prioritize monthly ownership cost:
 
 | Region | Content |
 | --- | --- |
-| Decision | Recommended acquisition strategy and replacement sequence, cost gap, confidence indicator |
-| Economics | NPV, equivalent annual cost, actual monthly cash flow, terminal net worth |
+| Decision | Optimal replacement time for Story 1; lowest monthly ownership cost and monthly delta for Stories 2A/2B |
+| Monthly cost | Ranked stacked bars, cost-category breakdown, and comparison toggles |
+| Equity | Vehicle value, financing/buyout liability, vehicle equity, and modeled cash or investment balance by path |
+| Economics | Cost NPV, total holding-period cost, average monthly cash outflow, and terminal modeled position |
 | Timeline | Cost curve, vehicle transitions, and event markers |
 | Uncertainty | Sensitivity tornado; percentile bands in stochastic mode |
 
 **Net present value (NPV)** converts every path's future payment, tax, fee,
 incentive, and terminal proceeds to analysis-date dollars using the declared
 discount rate. The decision view compares present-value cost, where a lower cost
-is better. **Terminal net worth** separately reports vehicle equity plus
-investment and retained-cash balances minus outstanding debt at the selected
-horizon.
+is better. The **terminal modeled position** separately reports vehicle equity
+plus included investment and retained-cash balances minus outstanding vehicle
+debt at the selected horizon. It is not labeled household net worth because the
+model does not include every household asset and liability.
 
-NPV and terminal net worth are complementary views and are never combined into
-one number. If investment opportunity cost is represented by the NPV discount
-rate, the calculation does not also add the same hypothetical investment return
-to NPV. The calculation manifest states which method drives the recommendation.
+NPV and the terminal modeled position are complementary views and are never
+combined into one number. If investment opportunity cost is represented by the
+NPV discount rate, the calculation does not also add the same hypothetical
+investment return to NPV. The calculation manifest states which method drives
+the recommendation.
 
-Recommendations include the winning condition: for example, "Loan is cheaper
-than cash by $2,480 NPV if after-tax investment return remains above 4.8%."
+Recommendations include the winning condition using the headline metric. For
+example: "Loan costs $46 less per month than cash when gross annual investment
+return exceeds 4.8%." NPV is available in the supporting detail and export.
 When saving behavior changes the winner, the result shows both outcomes and the
 monthly saving amount or rate required to reach the economic-potential result.
 
-## 7. Cross-flow handoffs
+## 7. Proposed cross-flow handoffs
 
 Users can branch without re-entry:
 
@@ -312,9 +526,12 @@ source calculation.
 
 ## 8. Canonical state model
 
-`schemas/calculator-input.schema.json` is the source of truth for persisted and
-API-bound inputs. UI-only state such as expanded panels, field focus, and chart
-selection must not be stored in the calculation payload.
+`schemas/calculator-input.schema.json` is the working source of truth for
+calculation inputs while the model is being validated. It may evolve when tests
+expose missing assumptions or ambiguous definitions. Once stabilized, it will
+become the persisted and API-bound contract for the web application. UI-only
+state such as expanded panels, field focus, and chart selection must not be
+stored in the calculation payload.
 
 The current `1.0.0` schema represents a single-vehicle baseline. Before
 multi-period strategy calculations are implemented, a versioned schema revision
@@ -333,3 +550,13 @@ used-vs-new         -> usedVsNew
 
 Schema version changes are explicit. Saved scenarios require migrations rather
 than permissive parsing or silent defaults.
+
+Version 2 removes consumer balloon-loan input, records whether a lease's first
+payment is included at signing, separates purchase taxes from recurring
+government charges, requires lease term-end strategy, and simplifies investment
+inputs to starting capital plus gross annual return. Its migration converts
+`horizonYears` to `horizonMonths` by
+multiplying by 12, expands a numeric incentive into an attributed path-specific
+incentive array, supplies a tax jurisdiction, and converts annual registration
+to a government-charge schedule. Version 1 scenarios require this explicit
+migration before calculation.
