@@ -91,30 +91,108 @@ to know whether to keep it for two, four, or six more years.
 
 ### 4.2 New car acquisition
 
-**Scenario:** A user has cash available for a vehicle but wants to compare
-paying cash, financing, and leasing while investing unused capital.
+**Scenario:** A user wants to compare paying cash, financing, and leasing. The
+user may have the full purchase amount, only a down payment, or only enough for
+lease inception costs. Investment results depend on what the user actually does
+with unused cash rather than assuming every avoided payment is invested.
 
 | Step | Inputs | Progressive disclosure |
 | --- | --- | --- |
-| Vehicle | Price, taxes, fees, incentives, holding period, resale forecast | Incentive eligibility details appear when an incentive is entered |
-| Cash | Cash price adjustments | Included by default |
+| Vehicle | Asking price, transaction price, taxes, fees, path-specific incentives, holding period, resale forecast | Incentive eligibility and market-value details appear when needed |
+| Available capital | Liquid cash, current-vehicle proceeds, maximum monthly vehicle budget | Affordability warnings appear per path without hiding hypothetical comparisons |
+| Cash | Cash price adjustments, source of funds, post-purchase saving behavior | Monthly saving controls appear only when surplus cash flow exists |
 | Loan | Down payment, APR, term, fees, prepayment, balloon | Balloon input appears only for balloon loans |
-| Lease | Due at signing, term, payment, residual/buyout, mileage allowance, disposition fee | Excess mileage estimate appears when expected mileage exceeds allowance |
+| Lease | Due at signing, term, payment, residual/buyout, mileage allowance, disposition fee, end strategy | Renewal assumptions appear when the analysis extends past the lease term |
 | Ownership costs | Insurance by path, maintenance, registration, energy | A shared value can be overridden per path |
-| Investment overlay | Starting investable capital, return, volatility, tax rate, contribution timing | Volatility and simulation count appear only in stochastic mode |
+| Investment overlay | Return, volatility, tax rate, contribution timing, treatment of monthly surplus | Volatility and simulation count appear only in stochastic mode |
 
 Users may disable loan or lease paths. At least two acquisition paths must
 remain enabled for a comparison.
 
+#### Comparison baseline and affordability
+
+- Available capital is an independent household input; it is never inferred from
+  the vehicle price.
+- Every path starts from the same opening balance sheet. Incentives, trade-in
+  proceeds, and unused capital must not disappear from only one path.
+- A path that exceeds available cash is marked `Not currently affordable`.
+  Users may retain it as a clearly labeled hypothetical comparison.
+- Transaction price and vehicle market value are separate. An incentive reduces
+  the amount paid but does not define the asset's value. Market-value and
+  depreciation defaults are specific to brand, model, age, and mileage, display
+  their source and date, and remain editable.
+- Loan payments are derived from amount financed, APR, term, and contractual
+  fees. A monthly-budget solver may derive an affordable amount financed, but it
+  must be presented as a separate planning mode rather than an offer.
+
+#### Saving behavior
+
+Paying cash does not imply that the user will invest an amount equal to a loan
+or lease payment. For each positive monthly cash-flow difference, users choose:
+
+1. Invest all of it automatically.
+2. Invest a custom amount or percentage.
+3. Retain it as cash.
+4. Treat it as spent and unavailable at the horizon.
+
+The default is explicit and editable. Results distinguish **economic potential**
+(the surplus is invested consistently) from **behavior-adjusted outcome** (the
+user's selected behavior). Recommendations state the required behavior, such as
+"Cash leads only if at least $310 per month is invested."
+
+An optional common-budget comparison invests the difference between the budget
+and each path's actual monthly outflow. It never changes or conceals the
+contractual payment.
+
+#### Multi-vehicle horizon and branch points
+
+An analysis horizon, especially a three-to-nine-year horizon, may contain more
+than one vehicle. The model creates explicit decisions at lease maturity, loan
+payoff, and user-selected replacement ages.
+
+- Lease maturity: return and lease again, buy out with cash, finance the buyout,
+  buy another new or used vehicle, or extend the lease when offered.
+- Owned vehicle: keep it, sell or trade it, or replace it with a new or used
+  vehicle using cash or financing.
+- A subsequent vehicle or lease has independent price, incentive, rate, payment,
+  tax, fee, market-value, and operating-cost assumptions. The first offer is
+  never silently reused.
+
+Strategy presets such as `Lease every 3 years`, `Buy and keep`, and `Replace
+after payoff` keep the primary UI manageable. Advanced users may customize
+individual branch decisions. The UI may warn when an ownership duration is
+unusual for the selected vehicle, but it does not force replacement.
+
+#### Taxes and incentives
+
+Tax treatment is jurisdiction- and path-specific. Purchase paths may owe sales
+tax on the whole taxable transaction, while leases may tax each payment, charge
+tax up front, or tax a broader amount depending on the jurisdiction. Lease
+buyouts can create a separate taxable transaction and additional fees.
+
+Incentives declare eligibility, applicable acquisition paths, timing, and tax
+treatment. A purchase incentive is not assumed to apply to a lease; a lessor
+credit passed through as a lower lease cost is recorded as a lease-specific
+incentive. Missing jurisdiction rules produce a visible warning and excluded-cost
+entry rather than silently assuming zero tax.
+
 **Cash-flow convention**
 
-- Time zero includes down payment, due-at-signing amounts, taxes, fees, and
-  initial investment.
+- Time zero includes available capital, down payment, due-at-signing amounts,
+  taxes, fees, incentives, and initial investment.
 - Monthly payments occur at period end unless marked "paid in advance."
 - Resale value, lease disposition, and investment liquidation occur at the end
   of the selected holding period.
 - Refundable lease deposits are cash outflows at inception and inflows at
   return.
+- Month zero and month one are distinct. Each recurring payment or contribution
+  is posted exactly once, and resale/depreciation endpoints use the exact number
+  of elapsed months.
+- Chained ownership segments share one boundary event; a lease-maturity or
+  replacement month is not duplicated.
+- A repeated lease includes its new due-at-signing amount, payment, incentives,
+  taxes, and fees. Any amount above a common monthly budget reduces cash or
+  investment explicitly.
 
 ### 4.3 Used versus new
 
@@ -134,6 +212,11 @@ number.
 The result must show both the raw ownership-cost gap and the
 reliability-adjusted gap. Reliability cost is never silently folded into
 maintenance.
+
+Both vehicles support cash and loan comparisons using the same available-capital
+baseline, cash-flow timing, and saving-behavior rules as the new-car flow. A
+used-car cash path is not assumed affordable merely because it is cheaper, and a
+loan path retains all unused capital in the selected cash or investment account.
 
 ## 5. Input interaction patterns
 
@@ -180,6 +263,8 @@ The review screen is a calculation manifest, not another form. It groups:
 - vehicle facts;
 - path-specific cash flows;
 - shared economic assumptions;
+- available-capital and saving-behavior assumptions;
+- replacement and lease-end decisions;
 - derived values;
 - warnings and excluded costs.
 
@@ -189,13 +274,27 @@ The results workspace uses the same four-region layout for all flows:
 
 | Region | Content |
 | --- | --- |
-| Decision | Recommended path/time, cost gap, confidence indicator |
-| Economics | NPV, equivalent annual cost, monthly cash flow, terminal value |
-| Timeline | Cost curve and event markers |
+| Decision | Recommended acquisition strategy and replacement sequence, cost gap, confidence indicator |
+| Economics | NPV, equivalent annual cost, actual monthly cash flow, terminal net worth |
+| Timeline | Cost curve, vehicle transitions, and event markers |
 | Uncertainty | Sensitivity tornado; percentile bands in stochastic mode |
+
+**Net present value (NPV)** converts every path's future payment, tax, fee,
+incentive, and terminal proceeds to analysis-date dollars using the declared
+discount rate. The decision view compares present-value cost, where a lower cost
+is better. **Terminal net worth** separately reports vehicle equity plus
+investment and retained-cash balances minus outstanding debt at the selected
+horizon.
+
+NPV and terminal net worth are complementary views and are never combined into
+one number. If investment opportunity cost is represented by the NPV discount
+rate, the calculation does not also add the same hypothetical investment return
+to NPV. The calculation manifest states which method drives the recommendation.
 
 Recommendations include the winning condition: for example, "Loan is cheaper
 than cash by $2,480 NPV if after-tax investment return remains above 4.8%."
+When saving behavior changes the winner, the result shows both outcomes and the
+monthly saving amount or rate required to reach the economic-potential result.
 
 ## 7. Cross-flow handoffs
 
@@ -216,6 +315,13 @@ source calculation.
 `schemas/calculator-input.schema.json` is the source of truth for persisted and
 API-bound inputs. UI-only state such as expanded panels, field focus, and chart
 selection must not be stored in the calculation payload.
+
+The current `1.0.0` schema represents a single-vehicle baseline. Before
+multi-period strategy calculations are implemented, a versioned schema revision
+must encode available capital, saving behavior, path-specific incentive and tax
+treatment, lease-end strategy, and subsequent vehicle/offer assumptions. Saved
+single-vehicle scenarios require an explicit migration and must not be silently
+interpreted as multi-vehicle strategies.
 
 The `flow` discriminator selects exactly one payload:
 
