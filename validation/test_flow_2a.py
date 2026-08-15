@@ -86,6 +86,20 @@ class VehicleOnlyMonthlyCostTest(unittest.TestCase):
         self.assertEqual(round(lease_path(self.scenario, 36, BUYOUT).monthly_ownership_cost), 625)
         self.assertEqual(round(lease_path(self.scenario, 48, BUYOUT).monthly_ownership_cost), 599)
 
+    def test_corrected_36_month_cells_to_the_cent(self):
+        """Lock the correction documented in docs/multi-flow-ux.md.
+
+        The 36-month row originally read $532 and $583. The doc explains the
+        correction using these exact unrounded values, so they are asserted at
+        cent precision: rounding alone would let the cited figures drift.
+        """
+        self.assertAlmostEqual(
+            cash_path(self.scenario, 36).monthly_ownership_cost, 531.45, places=2
+        )
+        self.assertAlmostEqual(
+            loan_path(self.scenario, 36).monthly_ownership_cost, 582.41, places=2
+        )
+
 
 class InvestmentAdjustedTest(unittest.TestCase):
     """Documented investment-adjusted monthly ownership cost at a 10% gross return."""

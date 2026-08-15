@@ -58,6 +58,14 @@ describe('vehicle-only equivalent monthly ownership cost', () => {
     assert.equal(Math.round(leasePath(scenario, 36, BUYOUT).monthlyOwnershipCost), 625);
     assert.equal(Math.round(leasePath(scenario, 48, BUYOUT).monthlyOwnershipCost), 599);
   });
+
+  // The 36-month row originally read $532 and $583. docs/multi-flow-ux.md
+  // explains that correction using these exact unrounded values, so they are
+  // asserted at cent precision: rounding alone would let the cited figures drift.
+  it('locks the corrected 36-month cells to the cent', () => {
+    assert.ok(Math.abs(cashPath(scenario, 36).monthlyOwnershipCost - 531.45) < 0.005);
+    assert.ok(Math.abs(loanPath(scenario, 36).monthlyOwnershipCost - 582.41) < 0.005);
+  });
 });
 
 describe('investment-adjusted monthly ownership cost', () => {

@@ -350,10 +350,24 @@ Validation references:
 - [CFPB: loan-to-value in an auto loan](https://www.consumerfinance.gov/ask-cfpb/what-is-a-loan-to-value-ratio-in-an-auto-loan-en-769/)
 
 This snapshot is reproduced by the executable harness in `validation/`, which is
-the source of truth for the figures above. The 36-month cash and loan cells were
-originally recorded as $532 and $583; recomputation under the documented
-geometric monthly rate gives $531 and $582, and no single consistent discount
-convention reproduces the original pair. They are corrected above.
+the source of truth for the figures above.
+
+**Correction to the 36-month row.** It was originally recorded as $532 (cash)
+and $583 (loan). Recomputing under each plausible discounting rule shows the
+original pair was not reachable under either one:
+
+| Discounting rule | Cash | Loan |
+| --- | ---: | ---: |
+| Geometric, `(1 + annual) ** (1/12) - 1` (the documented convention) | 531.45 -> **$531** | 582.41 -> **$582** |
+| Simple, `annual / 12` | 531.75 -> $532 | 582.50 -> $582 |
+
+Both rules give $582 for the loan, so **no convention produces $583**. The cash
+value of $532 is reachable only under the simple rule, which is not the
+convention this model uses. The original pair therefore mixed one rule with an
+arithmetic error rather than reflecting a deliberate modeling choice. Both cells
+are corrected above and are now asserted by tests in `validation/` and
+`src/engine/`, so any future drift fails the suite instead of sitting unnoticed
+in a table.
 
 #### Flow 2A limited-capital study
 
