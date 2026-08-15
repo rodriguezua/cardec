@@ -8,6 +8,12 @@ application and not a UI prototype.
 It exists so the documented numbers are reproducible and so changes to the
 model fail loudly instead of drifting.
 
+The model is implemented twice: this Python harness is the reference oracle,
+and [`src/engine/`](../src/engine) is the JavaScript port the UI runs on. Both
+assert the same documented figures, so a disagreement between them means one
+has drifted. When you change a formula here, change it there too and run both
+suites.
+
 ## Requirements
 
 Python 3.9 or newer. No third-party packages.
@@ -22,6 +28,12 @@ python3 -m unittest discover -s validation -p 'test_*.py'
 
 ```bash
 python3 validation/limited_capital.py
+```
+
+## Run the JavaScript port
+
+```bash
+npm test
 ```
 
 ## Layout

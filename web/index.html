@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cardec - new car acquisition explorer</title>
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>New car acquisition explorer</h1>
+      <p class="subtitle">
+        Flow 2A model validation surface. Every number here comes from
+        <code>src/engine/</code>, the same code locked by the regression tests
+        and cross-checked against the Python harness in <code>validation/</code>.
+      </p>
+    </header>
+
+    <main>
+      <section class="panel" aria-labelledby="inputs-heading">
+        <h2 id="inputs-heading">Inputs</h2>
+
+        <div class="controls" id="controls"></div>
+
+        <fieldset class="strategy">
+          <legend>Saving behavior for capital not spent at time zero</legend>
+          <label>
+            <input type="radio" name="saving" value="invested" checked />
+            Invested at the assumed return
+          </label>
+          <label>
+            <input type="radio" name="saving" value="cash" />
+            Held as cash, not invested
+          </label>
+          <label>
+            <input type="radio" name="saving" value="spent" />
+            Spent or dissolved
+          </label>
+          <p class="hint">
+            The default assumes a disciplined investor. Someone who avoids a
+            large down payment does not automatically invest the difference, so
+            the other two options drop the investment return: "held as cash"
+            keeps the unspent money, "spent or dissolved" does not. All three
+            produce the same vehicle costs; only the opportunity-cost charge and
+            the residual balance change.
+          </p>
+        </fieldset>
+      </section>
+
+      <section class="panel" aria-labelledby="chart-heading">
+        <h2 id="chart-heading">Equivalent monthly ownership cost by holding period</h2>
+        <div class="chart-toggle" role="group" aria-label="Cost basis">
+          <label>
+            <input type="radio" name="basis" value="monthlyOwnershipCost" checked />
+            Vehicle-only
+          </label>
+          <label>
+            <input type="radio" name="basis" value="investmentAdjustedMonthlyCost" />
+            Opportunity-cost adjusted
+          </label>
+        </div>
+        <div id="chart" class="chart"></div>
+        <p class="hint" id="basis-hint"></p>
+      </section>
+
+      <section class="panel" aria-labelledby="table-heading">
+        <h2 id="table-heading">Detail at the selected holding period</h2>
+        <div id="results"></div>
+        <div class="caveat">
+          <strong>Terminal position is not a ranking.</strong>
+          Vehicle equity and investment balance are disclosed per path, but they
+          are not comparable across paths: the investment overlay funds only the
+          time-zero outlay, so a path that defers a large payment shows an
+          inflated balance while that payment is charged in cost NPV instead.
+          Compare paths by equivalent monthly cost or cost NPV.
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

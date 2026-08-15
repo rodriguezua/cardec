@@ -26,16 +26,43 @@ Development order:
 5. Implement and test the selected web interface.
 
 Step 1 is in progress. The Flow 2A new-car scenario is covered by an executable
-harness; used-vehicle, multi-vehicle, and stochastic work is not started.
+harness and by a calculation engine with an exploratory UI; used-vehicle,
+multi-vehicle, and stochastic work is not started.
 
 ## Model validation harness
 
-[`validation/`](validation/README.md) holds a dependency-free Python harness
-that reproduces the documented Flow 2A figures and fails when the model drifts.
+The model is implemented twice on purpose, and the two implementations are
+cross-checked against the same documented figures. A disagreement between them
+means one has drifted.
+
+[`validation/`](validation/README.md) holds the dependency-free Python
+reference harness:
 
 ```bash
 python3 -m unittest discover -s validation -p 'test_*.py'
 ```
+
+[`src/engine/`](src/engine) holds the JavaScript port that the UI runs on. It
+is plain ESM with JSDoc types, so it needs no build step and no dependencies:
+
+```bash
+npm test
+```
+
+## Exploratory UI
+
+[`web/`](web) is a slider-driven surface for the Flow 2A paths. It exists to
+make the model inspectable, not to propose a final product design (see
+"Current phase" above).
+
+```bash
+npm start   # http://localhost:5173/web/
+```
+
+The UI imports `src/engine/` directly and holds **no financial formulas of its
+own**. Every displayed figure comes from the tested engine. If a number looks
+wrong, fix the engine and its tests; never adjust the presentation layer to
+compensate.
 
 ## Concept and model documentation
 
@@ -43,6 +70,7 @@ python3 -m unittest discover -s validation -p 'test_*.py'
 - [Flowcharts and questionnaire logic](docs/flow-diagrams.md)
 - [Canonical calculator input schema](schemas/calculator-input.schema.json)
 - [Model validation harness](validation/README.md)
+- [Calculation engine](src/engine)
 
 The working input contract uses a shared scenario envelope and three
 discriminated flows:
