@@ -313,7 +313,7 @@ fee labels or quote source instead of silently grouping it.
 | Horizon | Cash | Loan | Lease |
 | ---: | ---: | ---: | ---: |
 | 24 months | $506 | $564 | Not comparable without a month-24 exit quote |
-| 36 months | $532 | $583 | $622 return / $625 buyout |
+| 36 months | $531 | $582 | $622 return / $625 buyout |
 | 48 months | $529 | $573 | $599 after month-36 buyout |
 
 At a deterministic 10% gross investment return, the initial-capital opportunity cost
@@ -348,6 +348,57 @@ Validation references:
 
 - [South Carolina maximum tax and infrastructure maintenance fee](https://dor.sc.gov/sales-use-tax-index/maximum-tax-max-tax)
 - [CFPB: loan-to-value in an auto loan](https://www.consumerfinance.gov/ask-cfpb/what-is-a-loan-to-value-ratio-in-an-auto-loan-en-769/)
+
+This snapshot is reproduced by the executable harness in `validation/`, which is
+the source of truth for the figures above. The 36-month cash and loan cells were
+originally recorded as $532 and $583; recomputation under the documented
+geometric monthly rate gives $531 and $582, and no single consistent discount
+convention reproduces the original pair. They are corrected above.
+
+#### Flow 2A limited-capital study
+
+The snapshot above assumes the user holds the full $42,000 out-the-door amount.
+That is the least common real case, so the same vehicle, contract, cost, and
+rate assumptions were rerun while varying only available capital. The loan uses
+the documented 20% baseline down payment when affordable and otherwise puts all
+available cash down.
+
+| Available capital | Path | Affordable | Monthly cost | Investment-adjusted | Investment balance | Vehicle equity | Terminal position |
+| ---: | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| $4,118 | cash | no | n/a | n/a | n/a | n/a | n/a |
+| $4,118 | loan | yes | $589 | $626 | $0 | $13,306 | $13,306 |
+| $4,118 | lease return | yes | $622 | $659 | $0 | $0 | $0 |
+| $4,118 | lease buyout | yes | $625 | $662 | $0 | $29,369 | $29,369 |
+| $8,400 | loan | yes | $582 | $658 | $0 | $15,122 | $15,122 |
+| $8,400 | lease return | yes | $622 | $659 | $5,699 | $0 | $5,699 |
+| $15,000 | loan | yes | $582 | $658 | $8,785 | $15,122 | $23,906 |
+| $15,000 | lease return | yes | $622 | $659 | $14,484 | $0 | $14,484 |
+| $42,000 | cash | yes | $531 | $909 | $0 | $29,369 | $29,369 |
+| $42,000 | loan | yes | $582 | $658 | $44,722 | $15,122 | $59,843 |
+| $42,000 | lease return | yes | $622 | $659 | $50,421 | $0 | $50,421 |
+| $42,000 | lease buyout | yes | $625 | $662 | $50,421 | $29,369 | $79,790 |
+
+Three findings constrain how results may be presented:
+
+1. **Capital changes feasibility, not the opportunity-cost ranking.** Monthly and
+   investment-adjusted cost are identical at $8,400, $15,000, and $42,000 of
+   capital because the overlay charges each path for its own time-zero outlay
+   whether or not the user held that money. Available capital changes the
+   comparison only by removing paths and by resizing the down payment. The UI
+   must therefore not imply that the opportunity-cost view answers "what should
+   I do with the cash I actually have."
+2. **A smaller down payment lowers investment-adjusted cost.** At $4,118 of
+   capital the loan's vehicle-only cost rises to $589 while its
+   investment-adjusted cost falls to $626, because less capital is committed at
+   time zero. Presenting only one of these metrics inverts the conclusion.
+3. **Terminal position is not comparable across paths under this convention.**
+   The overlay invests unused time-zero capital and never funds later outflows,
+   so the month-36 lease buyout shows a $79,790 terminal position against
+   $29,369 for cash: the vehicle is credited while the $29,869 buyout is charged
+   only inside cost NPV. Terminal position may be shown per path as a balance
+   disclosure, but paths may not be ranked by it until every path settles its
+   cash flows from the same modeled account.
+
 
 ### 4.3 Used versus new
 
@@ -496,7 +547,10 @@ discount rate. The decision view compares present-value cost, where a lower cost
 is better. The **terminal modeled position** separately reports vehicle equity
 plus included investment and retained-cash balances minus outstanding vehicle
 debt at the selected horizon. It is not labeled household net worth because the
-model does not include every household asset and liability.
+model does not include every household asset and liability. Paths may not be
+ranked by terminal position while the capital overlay funds only time-zero
+outlays, because later payments and buyouts are charged to cost NPV instead of
+the modeled account.
 
 NPV and the terminal modeled position are complementary views and are never
 combined into one number. If investment opportunity cost is represented by the
