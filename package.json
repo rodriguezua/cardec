@@ -1,0 +1,15 @@
+{
+  "name": "cardec",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Vehicle economics model validation and calculator UI",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test 'src/engine/*.test.js'",
+    "test:python": "python3 -m unittest discover -s validation -p 'test_*.py'",
+    "start": "node tools/serve.js"
+  }
+}
